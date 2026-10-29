@@ -24,12 +24,19 @@ if not authtoken or authtoken == "your_ngrok_authtoken_here":
     print("=" * 65 + "\n")
     sys.exit(1)
 
+domain = os.getenv("NGROK_DOMAIN", "").strip().strip('"').strip("'")
+
 # Apply authtoken
 conf.get_default().auth_token = authtoken
 
 print(f"Opening ngrok tunnel to local server on port {port}...")
 try:
-    tunnel = ngrok.connect(port)
+    if domain and domain != "your-static-domain.ngrok-free.app":
+        target_url = domain if domain.startswith("https://") else f"https://{domain}"
+        print(f"Binding to static domain: {target_url}")
+        tunnel = ngrok.connect(port, url=target_url)
+    else:
+        tunnel = ngrok.connect(port)
     public_url = tunnel.public_url
 
     print("\n" + "=" * 65)

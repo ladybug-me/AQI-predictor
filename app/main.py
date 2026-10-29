@@ -46,7 +46,12 @@ def startup_event() -> None:
             try:
                 from pyngrok import conf, ngrok
                 conf.get_default().auth_token = token
-                tunnel = ngrok.connect(port)
+                domain = os.getenv("NGROK_DOMAIN", "").strip().strip('"').strip("'")
+                if domain and domain != "your-static-domain.ngrok-free.app":
+                    target_url = domain if domain.startswith("https://") else f"https://{domain}"
+                    tunnel = ngrok.connect(port, url=target_url)
+                else:
+                    tunnel = ngrok.connect(port)
                 logger.info("==================================================")
                 logger.info("NGROK PUBLIC TUNNEL ACTIVE: %s", tunnel.public_url)
                 logger.info("==================================================")
