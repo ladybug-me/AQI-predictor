@@ -46,7 +46,7 @@ def startup_event() -> None:
             try:
                 from pyngrok import conf, ngrok
                 conf.get_default().auth_token = token
-                tunnel = ngrok.connect(port, bind_tls=True)
+                tunnel = ngrok.connect(port)
                 logger.info("==================================================")
                 logger.info("NGROK PUBLIC TUNNEL ACTIVE: %s", tunnel.public_url)
                 logger.info("==================================================")

@@ -29,7 +29,7 @@ conf.get_default().auth_token = authtoken
 
 print(f"Opening ngrok tunnel to local server on port {port}...")
 try:
-    tunnel = ngrok.connect(port, bind_tls=True)
+    tunnel = ngrok.connect(port)
     public_url = tunnel.public_url
 
     print("\n" + "=" * 65)
