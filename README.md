@@ -189,11 +189,23 @@ Open your browser to `http://localhost:8000` to view the live dashboard.
 
 ### 4. Public Tunneling with ngrok
 
-To expose the local alert system publicly for community or mobile access:
+The service integrates `pyngrok` directly via `uv` and loads credentials from `.env`.
 
-```bash
-ngrok http 8000
-```
+1. Copy the template and add your free token:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` with your token from [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken):
+   ```env
+   NGROK_AUTHTOKEN=your_actual_token_here
+   PORT=8000
+   ```
+
+2. Start the public tunnel:
+   ```bash
+   uv run python tunnel.py
+   ```
+   Or set `ENABLE_NGROK=true` in `.env` to automatically launch the tunnel alongside uvicorn.
 
 ---
 

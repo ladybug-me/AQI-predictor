@@ -4,12 +4,17 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import os
 from typing import Any, Optional
 
+from dotenv import load_dotenv
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
+
+# Load environment variables from .env
+load_dotenv()
 
 from app.config import (
     CPCB_PM25_LIMIT,
@@ -28,6 +33,37 @@ app = FastAPI(
     description="SDG 3 Early-Warning Health Alert Service predicting CPCB NAAQS 24h PM2.5 exceedance (>60 µg/m³)",
     version="1.0.0",
 )
+
+
+@app.on_event("startup")
+def startup_event() -> None:
+    """Initialize model artifacts and optionally initialize ngrok tunnel if enabled in .env."""
+    predictor.load_artifacts()
+    if os.getenv("ENABLE_NGROK", "false").lower() in ("true", "1", "yes"):
+        token = os.getenv("NGROK_AUTHTOKEN", "").strip()
+        port = int(os.getenv("PORT", "8000"))
+        if token and token != "your_ngrok_authtoken_here":
+            try:
+                from pyngrok import conf, ngrok
+                conf.get_default().auth_token = token
+                tunnel = ngrok.connect(port, bind_tls=True)
+                logger.info("==================================================")
+                logger.info("NGROK PUBLIC TUNNEL ACTIVE: %s", tunnel.public_url)
+                logger.info("==================================================")
+            except Exception as e:
+                logger.warning("Failed to auto-start ngrok tunnel: %s", e)
+        else:
+            logger.warning("ENABLE_NGROK is true, but NGROK_AUTHTOKEN is not set in .env.")
+
+
+@app.on_event("shutdown")
+def shutdown_event() -> None:
+    """Cleanly close any open ngrok tunnels on server shutdown."""
+    try:
+        from pyngrok import ngrok
+        ngrok.kill()
+    except Exception:
+        pass
 
 
 class WeatherDrivers(BaseModel):
