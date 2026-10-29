@@ -34,6 +34,7 @@ class WeatherDrivers(BaseModel):
     temp_c: float = Field(..., description="Daily mean temperature in Celsius")
     wind_kmh: float = Field(..., description="Maximum 10m wind speed in km/h")
     humidity_pct: int = Field(..., description="Daily mean relative humidity percentage")
+    precip_mm: Optional[float] = Field(0.0, description="Precipitation in mm")
 
 
 class ForecastResponse(BaseModel):
@@ -44,6 +45,8 @@ class ForecastResponse(BaseModel):
     cpcb_limit_ug_m3: float
     weather_drivers: WeatherDrivers
     health_advisory: str
+    lag_pm25_24h: Optional[float] = None
+    is_winter_inversion: Optional[int] = None
 
 
 class SimulationRequest(BaseModel):
@@ -708,10 +711,11 @@ def get_dashboard() -> HTMLResponse:
           </div>
         </div>
 
-        <div class="sim-actions">
+        <div class="sim-actions" style="flex-wrap: wrap;">
           <button class="btn-sim" onclick="runSimulation()">Simulate Scenario</button>
           <button class="btn-preset" onclick="loadWinterPreset()">Winter Inversion Preset</button>
           <button class="btn-preset" onclick="loadMonsoonPreset()">Monsoon Washout Preset</button>
+          <button class="btn-preset" onclick="fetchLiveForecast()">Reset to Live Forecast</button>
         </div>
       </div>
 
@@ -766,7 +770,7 @@ def get_dashboard() -> HTMLResponse:
         const resp = await fetch('/api/v1/forecast');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
         const data = await resp.json();
-        renderForecast(data);
+        renderForecast(data, false);
       } catch (err) {
         console.error(err);
         errBox.classList.add('active');
@@ -776,7 +780,7 @@ def get_dashboard() -> HTMLResponse:
       }
     }
 
-    function renderForecast(data) {
+    function renderForecast(data, isSimulation = false) {
       const banner = document.getElementById('hero-banner');
       const badge = document.getElementById('light-badge');
       const badgeLabel = document.getElementById('badge-label');
@@ -794,7 +798,7 @@ def get_dashboard() -> HTMLResponse:
       probFill.style.width = Math.min(100, Math.max(5, probPercent)) + '%';
 
       advisory.innerText = data.health_advisory;
-      forecastDate.innerText = data.forecast_date;
+      forecastDate.innerText = (isSimulation ? 'Simulated Scenario · ' : 'Live Forecast · ') + data.forecast_date;
 
       const drivers = data.weather_drivers || {};
       document.getElementById('val-temp').innerText = (drivers.temp_c !== undefined ? drivers.temp_c : '--') + ' °C';
@@ -802,22 +806,32 @@ def get_dashboard() -> HTMLResponse:
       document.getElementById('val-humidity').innerText = (drivers.humidity_pct !== undefined ? drivers.humidity_pct : '--') + ' %';
       document.getElementById('val-precip').innerText = (drivers.precip_mm !== undefined ? drivers.precip_mm : '0.0') + ' mm';
 
-      // Seed simulator inputs with live values
-      if (drivers.temp_c) document.getElementById('sim-temp').value = drivers.temp_c;
-      if (drivers.wind_kmh) document.getElementById('sim-wind').value = drivers.wind_kmh;
-      if (drivers.humidity_pct) document.getElementById('sim-humidity').value = drivers.humidity_pct;
+      // Seed simulator inputs with live values when viewing live forecast
+      if (!isSimulation) {
+        if (data.lag_pm25_24h !== undefined && data.lag_pm25_24h !== null) {
+          document.getElementById('sim-lag').value = data.lag_pm25_24h;
+        }
+        if (data.is_winter_inversion !== undefined) {
+          document.getElementById('sim-inversion').value = String(data.is_winter_inversion);
+        }
+        if (drivers.temp_c !== undefined) document.getElementById('sim-temp').value = drivers.temp_c;
+        if (drivers.wind_kmh !== undefined) document.getElementById('sim-wind').value = drivers.wind_kmh;
+        if (drivers.humidity_pct !== undefined) document.getElementById('sim-humidity').value = drivers.humidity_pct;
+        if (drivers.precip_mm !== undefined) document.getElementById('sim-precip').value = drivers.precip_mm;
+      }
     }
 
     async function runSimulation() {
+      const inv = parseInt(document.getElementById('sim-inversion').value);
       const payload = {
         lag_pm25_24h: parseFloat(document.getElementById('sim-lag').value),
         temp_c: parseFloat(document.getElementById('sim-temp').value),
         wind_kmh: parseFloat(document.getElementById('sim-wind').value),
         humidity_pct: parseInt(document.getElementById('sim-humidity').value),
         precip_mm: parseFloat(document.getElementById('sim-precip').value),
-        is_winter_inversion: parseInt(document.getElementById('sim-inversion').value),
-        month: parseInt(document.getElementById('sim-inversion').value) === 1 ? 1 : 7,
-        day_of_week: 2
+        is_winter_inversion: inv,
+        month: inv === 1 ? 1 : 10,
+        day_of_week: 4
       };
 
       try {
@@ -828,7 +842,7 @@ def get_dashboard() -> HTMLResponse:
         });
         if (!resp.ok) throw new Error('Simulation failed: ' + resp.statusText);
         const data = await resp.json();
-        renderForecast(data);
+        renderForecast(data, true);
       } catch (e) {
         alert('Simulation error: ' + e.message);
       }

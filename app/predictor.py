@@ -141,12 +141,15 @@ class AQIPredictor:
 
         advisory = self.generate_health_advisory(traffic_light, weather_drivers, is_winter)
 
-        # Standard weather drivers payload (temp_c, wind_kmh, humidity_pct)
+        # Standard weather drivers payload
         standard_drivers = {
             "temp_c": weather_drivers.get("temp_c"),
             "wind_kmh": weather_drivers.get("wind_kmh"),
             "humidity_pct": weather_drivers.get("humidity_pct"),
+            "precip_mm": weather_drivers.get("precip_mm", 0.0),
         }
+
+        lag_val = float(features_df["lag_pm25_24h"].iloc[0]) if "lag_pm25_24h" in features_df else None
 
         return {
             "location": LOCATION_NAME,
@@ -156,6 +159,8 @@ class AQIPredictor:
             "cpcb_limit_ug_m3": CPCB_PM25_LIMIT,
             "weather_drivers": standard_drivers,
             "health_advisory": advisory,
+            "lag_pm25_24h": round(lag_val, 1) if lag_val is not None else None,
+            "is_winter_inversion": int(is_winter),
         }
 
 
