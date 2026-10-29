@@ -1,0 +1,57 @@
+{
+  "accuracy": 1.0,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1_score": 0.0,
+  "roc_auc": null,
+  "sample_counts": {
+    "total": 1095,
+    "train": 876,
+    "test": 219,
+    "train_exceedances": 22,
+    "test_exceedances": 0
+  },
+  "train_baseline": {
+    "accuracy": 0.8995,
+    "precision": 0.2,
+    "recall": 1.0,
+    "f1_score": 0.3333,
+    "roc_auc": 0.9646
+  },
+  "feature_importance": {
+    "temp_mean": {
+      "coefficient": 0.0823,
+      "odds_ratio": 1.0858
+    },
+    "wind_speed_max": {
+      "coefficient": -1.2718,
+      "odds_ratio": 0.2803
+    },
+    "humidity_mean": {
+      "coefficient": -0.7544,
+      "odds_ratio": 0.4703
+    },
+    "precip_sum": {
+      "coefficient": -0.9388,
+      "odds_ratio": 0.3911
+    },
+    "month": {
+      "coefficient": -0.285,
+      "odds_ratio": 0.752
+    },
+    "is_winter_inversion": {
+      "coefficient": 1.2063,
+      "odds_ratio": 3.3412
+    },
+    "day_of_week": {
+      "coefficient": -0.0331,
+      "odds_ratio": 0.9674
+    },
+    "lag_pm25_24h": {
+      "coefficient": 2.5973,
+      "odds_ratio": 13.4281
+    }
+  },
+  "trained_at_utc": "2026-10-29T16:21:43.943850+00:00",
+  "model_type": "LogisticRegression(class_weight='balanced')"
+}
