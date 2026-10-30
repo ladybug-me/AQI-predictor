@@ -29,7 +29,7 @@ Built strictly with Python `>=3.11`, `uv`, and `FastAPI`, the system rejects syn
 
 ## Regional Context & SDG 3 Alignment
 
-### Topographical & Atmospheric Dynamics of Vellore
+### Topographical & Atmospheric Dynamics of Vellore,Tamil Nadu
 
 Vellore lies in a semi-arid inland basin surrounded by low hills in northern Tamil Nadu, characterized by extreme seasonal shifts between dry heat and monsoon precipitation (~1,000 mm annual rainfall):
 
